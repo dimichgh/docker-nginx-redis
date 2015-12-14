@@ -15,7 +15,31 @@ var os = require('os');
 
 // APPROACH 2: Using host entries created by Docker in /etc/hosts (RECOMMENDED)
 // var client = redis.createClient('6379', 'redis');
+var sidecar = require('./sidecar');
 
+Object.keys(sidecar).forEach(function(key){
+  console.log(key);
+
+  app.get(sidecar[key], function(_req, _res, next){
+    var options = {
+      hostname: 'sidecar',
+      port: 4000,
+      path: sidecar[key],
+      method: 'GET'
+    };
+
+    var proxy = http.request(options, function (res) {
+       res.pipe(_res, {
+         end: true
+       });
+     });
+
+     _req.pipe(proxy, {
+       end: true
+     });
+  });
+
+});
 
 app.get('/', function(req, res, next) {
 
